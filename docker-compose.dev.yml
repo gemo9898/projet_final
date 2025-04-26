@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  nuxt-app:
+    build: 
+      context: ./forum
+      dockerfile: Dockerfile.dev
+    container_name: nuxt-forum
+    ports:
+      - '${NUXT_PORT}:${NUXT_INTERNAL_PORT}'
+    networks:
+      - forum-network
+    env_file:
+      - ./forum/.env
+    volumes:
+      - ./forum:/home/node/app
+      - /home/node/app/node_modules
+    command: npm run dev
+    depends_on:
+      - mysql.db
+
+  mysql.db:
+    image: mysql:latest
+    container_name: db-forum
+    restart: always
+    ports:
+      - '3306:3306'
+    env_file:
+      - ./forum/.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./forum/data:/docker-entrypoint-initdb.d
+    networks:
+      - forum-network
+
+  adminer:
+    image: adminer
+    container_name: adminer-forum
+    ports:
+      - '7002:8080'
+    networks:
+      - forum-network
+
+networks:
+  forum-network:
+    driver: bridge
